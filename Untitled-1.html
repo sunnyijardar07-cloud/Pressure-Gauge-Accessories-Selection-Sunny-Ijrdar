@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pressure Gauge Accessory Recommendation</title>
+  <style>
+    /* Background gradient with subtle gauge vibe */
+    body {
+      font-family: 'Trebuchet MS', sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: radial-gradient(circle at top left, #0f2027, #203a43, #2c5364);
+      color: #f0f0f0;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 1.8em;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ffcc00;
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+      color: #ffcc00;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border: 2px solid #ffcc00;
+      border-radius: 6px;
+      background: #1c1c1c;
+      color: #f0f0f0;
+    }
+
+    .buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      background: linear-gradient(45deg, #ffcc00, #ff6600);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px #000;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #1c1c1c;
+      border: 2px solid #ffcc00;
+    }
+
+    th, td {
+      border: 1px solid #ffcc00;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #ff6600;
+      color: #000;
+    }
+
+    .output {
+      margin-top: 20px;
+    }
+
+    /* Funky watermark with your name */
+    body::before {
+      content: "Sunny Ijardar – Instrumentation";
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      font-size: 3em;
+      color: rgba(255, 204, 0, 0.08);
+      z-index: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Pressure Gauge Accessory Recommendation</h1>
+
+  <form id="gaugeForm">
+    <label>Process Service:
+      <select id="process">
+        <option value="">Select...</option>
+        <option>Steam</option><option>Water</option><option>Oil</option>
+        <option>Air</option><option>Corrosive Chemical</option><option>Viscous Medium</option>
+      </select>
+    </label>
+
+    <label>Operating Temperature (°C): Min / Normal / Max</label>
+    <input type="number" id="tMin" placeholder="Min">
+    <input type="number" id="tNorm" placeholder="Normal">
+    <input type="number" id="tMax" placeholder="Max">
+
+    <label>Operating Pressure (barg): Min / Normal / Max</label>
+    <input type="number" id="pMin" placeholder="Min">
+    <input type="number" id="pNorm" placeholder="Normal">
+    <input type="number" id="pMax" placeholder="Max">
+
+    <label>Design Pressure (barg):</label>
+    <input type="number" id="pDesign">
+
+    <label>Is Gauge on Pump Discharge?</label>
+    <select id="pumpDischarge"><option value="">Select...</option><option>Yes</option><option>No</option></select>
+
+    <label>Is Gauge Accessible?</label>
+    <select id="accessible"><option value="">Select...</option><option>Yes</option><option>No</option></select>
+
+    <div class="buttons">
+      <button type="button" onclick="runEvaluation()">Evaluate</button>
+      <button type="button" onclick="resetForm()">Reset</button>
+    </div>
+  </form>
+
+  <div class="output" id="output">Results will appear here...</div>
+
+  <script>
+    function runEvaluation() {
+      const process = document.getElementById('process').value;
+      const tMax = Number(document.getElementById('tMax').value);
+      const pMin = Number(document.getElementById('pMin').value);
+      const pNorm = Number(document.getElementById('pNorm').value);
+      const pMax = Number(document.getElementById('pMax').value);
+      const pDesign = Number(document.getElementById('pDesign').value);
+      const pumpDischarge = document.getElementById('pumpDischarge').value;
+      const accessible = document.getElementById('accessible').value;
+
+      if (!process || isNaN(tMax) || isNaN(pMin) || isNaN(pNorm) || isNaN(pMax) || isNaN(pDesign) || !pumpDischarge || !accessible) {
+        document.getElementById('output').textContent = "⚠️ Please fill all required fields.";
+        return;
+      }
+
+      const gaugeSaver = pDesign > 1.3 * pMax ? "Yes" : "No";
+      const syphon = (process === "Steam" && tMax >= 150) ? "Yes" : "No";
+      const coolingElement = (tMax > 100 && syphon === "No") ? "Yes" : "No";
+      const snubber = (pumpDischarge === "Yes") ? "Yes" : "No";
+      const remoteMount = (accessible === "No" || tMax > 100) ? "Yes" : "No";
+      const glycerinFilled = (pumpDischarge === "Yes") ? "Yes" : "No";
+      const solidFront = (pMax > 30) ? "Yes" : "No";
+      const diaphragmSeal = (process === "Corrosive Chemical" || process === "Viscous Medium") ? "Yes" : "No";
+
+      let elementType = "Bourdon";
+      if (pMax < 0.5) elementType = "Capsule";
+      else if (pMax > 60) elementType = "Helical";
+
+      const ranges = [1,1.6,2.5,4,6,10,16,25,40,60,100,160,250,400];
+      const fs = ranges.find(r => pNorm >= 0.2*r && pNorm <= 0.8*r && pMax <= r);
+      const rangeText = fs ? `0–${fs} barg` : "Not able to meet range selection criteria";
+
+      let table = "<table><tr><th>Accessory</th><th>Recommendation</th></tr>";
+      table += `<tr><td>Gauge Saver</td><td>${gaugeSaver}</td></tr>`;
+      table += `<tr><td>Syphon</td><td>${syphon}</td></tr>`;
+      table += `<tr><td>Cooling Element</td><td>${coolingElement}</td></tr>`;
+      table += `<tr><td>Snubber</td><td>${snubber}</td></tr>`;
+      table += `<tr><td>Remote Mount</td><td>${remoteMount}</td></tr>`;
+      table += `<tr><td>Glycerin-Filled Gauge</td><td>${glycerinFilled}</td></tr>`;
+      table += `<tr><td>Solid Front Design</td><td>${solidFront}</td></tr>`;
+      table += `<tr><td>Diaphragm Seal</td><td>${diaphragmSeal}</td></tr>`;
+      table += "</table>";
+      table += `<p><strong>Suggested Pressure Gauge Element Type:</strong> ${elementType}</p>`;
+      table += `<p><strong>Recommended Gauge Range:</strong> ${rangeText}</p>`;
+
+      document.getElementById('output').innerHTML = table;
+    }
+
+    function resetForm() {
+      document.getElementById('gaugeForm').reset();
+      document.getElementById('output').textContent = "Results will appear here...";
+    }
+  </script>
+</body>
+</html>
